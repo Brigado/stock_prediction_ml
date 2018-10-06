@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 
-keywords_apple = ["Apple", "Apple Inc"]
+keywords_apple = ["Apple", "Apple Inc", "iPhone", "iPod"]
 
 data = pd.read_csv('news.csv')
 #print(data.head())
@@ -19,8 +19,11 @@ data["timestamp"] = data["timestamp"].apply(lambda date: date[:10])
 
 data['sentiment'] = ''
 
-data = data.iloc[:, :len(data)/2]  #Talle
-#data = data.iloc[:, len(data)/2:] #David
+print(len(data))
+#data = data.iloc[:, :len(data)/2]  #Talle
+data = data.iloc[:, int(len(data)/2):] #David
+
+print(data.head())
 
 for index, row in data.iterrows():
     sentiment = -1
@@ -37,5 +40,5 @@ for index, row in data.iterrows():
     data.at[index, 'sentiment'] = sentiment
 
 
-data.to_csv('news_data_sent_talle.csv')
-#data.to_csv('news_data_sent_david.csv')
+#data.to_csv('news_data_sent_talle.csv')
+data.to_csv('news_data_sent_david.csv')
