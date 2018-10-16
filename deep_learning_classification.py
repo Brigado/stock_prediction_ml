@@ -26,6 +26,42 @@ def pos_neg_neu(x):
         return 0
 
 
+def train(model, trainloader, validationloader, lossfunction, optimizer, n_epochs=100):
+    trainingLosses, validationLosses = [], []
+    for t in range(n_epochs):
+        running_loss = 0.0
+        for i, data in enumerate(trainloader):
+            inputs, labels = data
+            inputs, labels = Variable(inputs), Variable(labels).float()  # See the comments below (1)
+
+            optimizer.zero_grad()  # See the comments below (2)
+
+            outputs = model(inputs)  # See the comments below (3)
+
+            loss = lossfunction(outputs, labels)  # Compute the loss
+            loss.backward()  # Compute the gradient for each variable
+            optimizer.step()  # Update the weights according to the computed gradient
+
+            # for printing
+            running_loss += loss.data[0]
+
+        # This second loop is actually just calculating the loss in the validation set
+        # Otherwise, it's the same as above
+        running_loss_val = 0.0
+        for i, data in enumerate(validationloader):
+            inputs, labels = data
+            inputs, labels = Variable(inputs), Variable(labels).float()
+            outputs = model(inputs)
+            loss = lossfunction(outputs, labels)  # Compute the loss
+
+            # for printing
+            running_loss_val += loss.data[0]
+        trainingLosses.append(running_loss)
+        validationLosses.append(running_loss_val)
+        print("Epoch: {} Training loss: {:f} Validation loss: {:f}".format(t + 1, running_loss, running_loss_val))
+    return trainingLosses, validationLosses
+
+
 data = pd.read_csv('news_to_emotions.csv')
 data = data.drop(['market_date', 'company_symbol'], axis=1)
 data['sentiment'] = data['sentiment'].apply(lambda x: pos_neg_neu(x))
