@@ -1,4 +1,4 @@
-,market_date,company_symbol,sentiment,anger,anticipation,disgust,fear,joy,sadness,surprise,trust,is_volatile
+,market_date,company_symbol,anger,anticipation,disgust,fear,joy,sadness,surprise,trust,sentiment,is_volatile
 0,2010-09-01,UAA,1,1,0,1,2,1,2,0,positive,0
 1,2010-09-01,NBL,0,0,0,1,0,1,0,1,negative,0
 2,2010-09-01,AIG,0,2,0,1,1,0,1,2,positive,0
