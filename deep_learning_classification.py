@@ -1,13 +1,10 @@
+from keras.models import Sequential
+from keras.layers import Dense
+import keras
 import pandas as pd
 from sklearn.model_selection import train_test_split
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-import torch.utils.data
 
 counter = 0
-
 def drop_it_like_its_hot(x):
     global counter
     if counter < 13000 and x == 0:
@@ -15,7 +12,6 @@ def drop_it_like_its_hot(x):
             return -1
     else:
         return x
-
 
 def pos_neg_neu(x):
     if x == 'positive':
@@ -25,63 +21,25 @@ def pos_neg_neu(x):
     else:
         return 0
 
-
-def train(model, trainloader, validationloader, lossfunction, optimizer, n_epochs=100):
-    trainingLosses, validationLosses = [], []
-    for t in range(n_epochs):
-        running_loss = 0.0
-        for i, data in enumerate(trainloader):
-            inputs, labels = data
-            inputs, labels = Variable(inputs), Variable(labels).float()  # See the comments below (1)
-
-            optimizer.zero_grad()  # See the comments below (2)
-
-            outputs = model(inputs)  # See the comments below (3)
-
-            loss = lossfunction(outputs, labels)  # Compute the loss
-            loss.backward()  # Compute the gradient for each variable
-            optimizer.step()  # Update the weights according to the computed gradient
-
-            # for printing
-            running_loss += loss.data[0]
-
-        # This second loop is actually just calculating the loss in the validation set
-        # Otherwise, it's the same as above
-        running_loss_val = 0.0
-        for i, data in enumerate(validationloader):
-            inputs, labels = data
-            inputs, labels = Variable(inputs), Variable(labels).float()
-            outputs = model(inputs)
-            loss = lossfunction(outputs, labels)  # Compute the loss
-
-            # for printing
-            running_loss_val += loss.data[0]
-        trainingLosses.append(running_loss)
-        validationLosses.append(running_loss_val)
-        print("Epoch: {} Training loss: {:f} Validation loss: {:f}".format(t + 1, running_loss, running_loss_val))
-    return trainingLosses, validationLosses
-
-
 data = pd.read_csv('news_to_emotions.csv')
+data = data.drop(data.columns[0], axis=1)
 data = data.drop(['market_date', 'company_symbol'], axis=1)
 data['sentiment'] = data['sentiment'].apply(lambda x: pos_neg_neu(x))
 data['is_volatile'] = data['is_volatile'].apply(lambda x: drop_it_like_its_hot(x))
 data = data[~(data['is_volatile'] == -1.0)]
+data = data[12000:]
 
 x_train, x_test, y_train, y_test = train_test_split(data.drop(['is_volatile'], axis=1), data['is_volatile'], test_size=0.2)
-x_train, x_test, y_train, y_test = torch.from_numpy(x_train.values), torch.from_numpy(x_test.values),torch.from_numpy(y_train.values),torch.from_numpy(y_test.values)
+x_train, x_test, y_train, y_test = x_train.values, x_test.values, y_train.values, y_test.values
 
+model = Sequential()
+model.add(Dense(units=64, activation='relu', input_shape=(9,)))
+model.add(Dense(units=1, activation='sigmoid'))
 
-trainloader = torch.utils.data.DataLoader(torch.utils.data.TensorDataset(x_train.float(), y_train.float().view(-1,1)), batch_size=100)
-testloader = torch.utils.data.DataLoader(torch.utils.data.TensorDataset(x_test.float(), y_test.float().view(-1,1)), batch_size=100)
+model.compile(loss='binary_crossentropy',
+              optimizer='sgd',
+              metrics=['accuracy'])
 
-net = nn.Sequential(
-    nn.Linear(9, 1),
-    nn.Sigmoid()
-)
+model.fit(x_train, y_train, epochs=5, batch_size=32)
 
-loss = nn.BCELoss()
-opt = optim.SGD(net.parameters(), 1e-1)
-
-
-
+loss_and_metrics = model.evaluate(x_test, y_test, batch_size=128)
