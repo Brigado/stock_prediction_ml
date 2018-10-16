@@ -1,8 +1,12 @@
 from keras.models import Sequential
 from keras.layers import Dense
 import keras
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from keras.models import load_model
+import random
+import os
 
 counter = 0
 def drop_it_like_its_hot(x):
@@ -32,6 +36,13 @@ data = data[12000:]
 x_train, x_test, y_train, y_test = train_test_split(data.drop(['is_volatile'], axis=1), data['is_volatile'], test_size=0.2)
 x_train, x_test, y_train, y_test = x_train.values, x_test.values, y_train.values, y_test.values
 
+random.shuffle(x_train)
+random.shuffle(y_train)
+x_train_val = x_train[:int(len(x_train)*0.8)]
+x_val = x_train[int(len(x_train)*0.8):]
+y_train_val = y_train[:int(len(x_train)*0.8)]
+y_val =y_train[int(len(x_train)*0.8):]
+
 model = Sequential()
 model.add(Dense(units=64, activation='relu', input_shape=(9,)))
 model.add(Dense(units=1, activation='sigmoid'))
@@ -41,8 +52,11 @@ model.compile(loss='binary_crossentropy',
               metrics=['accuracy'])
 
 model.fit(x_train, y_train, epochs=5, batch_size=32)
+modelname = "model_{}".format(1)
+model.save('models/{}.h5'.format(modelname))
 
-print(x_test[1])
-print (model.predict(4,0,2,30  1  1  3 -1))
+q = model.predict_classes(np.array([x_test[1],]))
 
-#loss_and_metrics = model.evaluate(x_test, y_test, batch_size=128)
+loss_and_metrics = model.evaluate(x_val, y_val, batch_size=128)
+with open("loss_and_accuracy.txt", "a") as file:
+    file.write("{}: {}".format(modelname, loss_and_metrics))
