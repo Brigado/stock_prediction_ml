@@ -42,4 +42,7 @@ model.compile(loss='binary_crossentropy',
 
 model.fit(x_train, y_train, epochs=5, batch_size=32)
 
-loss_and_metrics = model.evaluate(x_test, y_test, batch_size=128)
+print(x_test[1])
+print (model.predict(4,0,2,30  1  1  3 -1))
+
+#loss_and_metrics = model.evaluate(x_test, y_test, batch_size=128)
