@@ -40,22 +40,66 @@ x_val = x_train[int(len(x_train)*0.8):]
 y_train_val = y_train[:int(len(y_train)*0.8)]
 y_val =y_train[int(len(y_train)*0.8):]
 
+'''
+model = Sequential()
+model.add(Dense(units=128, activation='relu', input_shape=(9,)))
+model.add(Dense(units=512, activation='relu'))
+model.add(Dense(units=1024, activation='relu'))
+model.add(Dense(units=1024, activation='relu'))
+model.add(Dense(units=1024, activation='relu'))
+model.add(Dense(units=512, activation='relu'))
+model.add(Dense(units=128, activation='relu'))
+model.add(Dense(units=1, activation='sigmoid'))
+'''
+
+'''
+model = Sequential()
+model.add(Dense(units=128, activation='relu', input_shape=(9,)))
+model.add(Dense(units=512, activation='relu'))
+model.add(Dense(units=512, activation='relu'))
+model.add(Dense(units=512, activation='relu'))
+model.add(Dense(units=128, activation='relu'))
+model.add(Dense(units=1, activation='sigmoid'))
+'''
+'''
 model = Sequential()
 model.add(Dense(units=64, activation='relu', input_shape=(9,)))
-model.add(Dense(units=64, activation='relu'))
-model.add(Dense(units=64, activation='relu'))
-model.add(Dense(units=64, activation='relu'))
-model.add(Dense(units=64, activation='relu'))
 model.add(Dense(units=1, activation='sigmoid'))
 
 model.compile(loss='binary_crossentropy',
               optimizer='sgd',
               metrics=['accuracy'])
+'''
 
-model.fit(x_train_val, y_train_val, epochs=100, batch_size=32, verbose=0)
-modelname = "model_{}".format(1)
+modelname = "model_{}_1000".format(1024)
+'''
+model.fit(x_train_val, y_train_val, epochs=10, batch_size=32, verbose=0)
+model.save('models/{}.h5'.format(modelname))
+loss_and_metrics = model.evaluate(x_val, y_val, batch_size=128)
+with open("loss_and_accuracy.txt", "a") as file:
+    file.write("real{}: {}\n".format(modelname, loss_and_metrics))
+    loss_and_metrics = model.evaluate(x_train, y_train, batch_size=128)
+    file.write("train{}: {}\n".format(modelname, loss_and_metrics))
+'''
+
+model = load_model("models/"+modelname+".h5")
+model.fit(x_train_val, y_train_val, epochs=1000, batch_size=32, verbose=0)
+modelname = "model_{}_2000".format(64)
 model.save('models/{}.h5'.format(modelname))
 
 loss_and_metrics = model.evaluate(x_val, y_val, batch_size=128)
 with open("loss_and_accuracy.txt", "a") as file:
-    file.write("{}: {}\n".format(modelname, loss_and_metrics))
+    file.write("real{}: {}\n".format(modelname, loss_and_metrics))
+    loss_and_metrics = model.evaluate(x_train, y_train, batch_size=128)
+    file.write("train{}: {}\n".format(modelname, loss_and_metrics))
+
+model = load_model("models/"+modelname+".h5")
+model.fit(x_train_val, y_train_val, epochs=1000, batch_size=32, verbose=0)
+modelname = "model_{}_3000".format(64)
+model.save('models/{}.h5'.format(modelname))
+
+loss_and_metrics = model.evaluate(x_val, y_val, batch_size=128)
+with open("loss_and_accuracy.txt", "a") as file:
+    file.write("real{}: {}\n".format(modelname, loss_and_metrics))
+    loss_and_metrics = model.evaluate(x_train, y_train, batch_size=128)
+    file.write("train{}: {}\n".format(modelname, loss_and_metrics))
