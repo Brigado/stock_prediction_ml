@@ -10,7 +10,7 @@ def pos_neg_neu(x):
     else:
         return 0
 
-data = pd.read_csv('news_to_emotions_relative.csv')
+data = pd.read_csv('news_to_emotions_relative_test.csv')
 
 #split data
 data_0 = data[data['is_volatile'] == 0]
