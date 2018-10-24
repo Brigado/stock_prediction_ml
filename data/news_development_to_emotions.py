@@ -5,12 +5,12 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 import os
 from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
 
-nltk.download()
+#nltk.download()
 
 ps = PorterStemmer()
 
 emotions = ['anger', 'anticipation', 'disgust', 'fear', 'joy', 'sadness', 'surprise', 'trust', 'positive', 'negative']
-col = ['market_date', 'company_symbol', 'anger', 'anticipation', 'disgust', 'fear', 'joy', 'sadness','surprise', 'trust', 'sentiment_dict', 'sentiment_lib_avg', 'development']
+col = ['market_date', 'company_symbol', 'anger', 'anticipation', 'disgust', 'fear', 'joy', 'sadness','surprise', 'trust', 'sentiment_dict', 'sent_compound', 'sent_neg', 'sent_neu', 'sent_pos', 'development']
 emotion_dfs = {}
 dict_path_dir = "../dictionaries/"
 for dict in os.listdir(dict_path_dir):
@@ -38,7 +38,7 @@ def get_emotions(wordset):
     return emotion_score, sentiment
 
 #dataset:
-df = pd.read_csv('news_to_development_dataset.csv')
+df = pd.read_csv('../news_to_development_dataset.csv')
 lst = []
 
 #for all headline for one market day:
@@ -51,18 +51,25 @@ for date in dateList:
     if (i%500 == 0):
         print(i)
         df_result = pd.DataFrame(lst, columns=col)
-        df_result.to_csv("news_development_to_emotions_relative{}.csv".format(i))
+        df_result.to_csv("news_development_to_emotions_relative_morefeatures{}.csv".format(i))
 
     for company in companyList:
         df_date_company = df.loc[(df['market_date'] == date) & (df['company_symbol'] == company), 'headline'].values
         # create bag of stemmed words out of headlines
         wordset = set()
-        sentiments = []
+        sentiments_pos = []
+        sentiments_neu = []
+        sentiments_neg = []
+        sentiments_compound = []
         for hl in df_date_company:
             #compute sentiment with library:
             sia = SIA()
             pol_score = sia.polarity_scores(hl)
-            sentiments.append(pol_score['compound'])
+            sentiments_compound.append(pol_score['compound'])
+            sentiments_neg.append(pol_score['neg'])
+            sentiments_neu.append(pol_score['neu'])
+            sentiments_pos.append(pol_score['pos'])
+
 
             #dictionary preparation
             words = word_tokenize(hl)
@@ -77,8 +84,14 @@ for date in dateList:
             sent = 0
 
         if len(wordset) > 0:
-            volatility = df.loc[(df['market_date'] == date) & (df['company_symbol'] == company), 'development'].values[0]
-            lst.append([date, company, float(emotions['anger'])/float(len(wordset)), float(emotions['anticipation'])/float(len(wordset)), float(emotions['disgust'])/float(len(wordset)), float(emotions['fear'])/float(len(wordset)), float(emotions['joy'])/float(len(wordset)), float(emotions['sadness'])/float(len(wordset)), float(emotions['surprise'])/float(len(wordset)), float(emotions['trust'])/float(len(wordset)), sent, sum(sentiments)/float(len(sentiments)), volatility])
+            sent_compound = sum(sentiments_compound)/float(len(sentiments_compound))
+            sent_neg = sum(sentiments_neg) / float(len(sentiments_neg))
+            sent_pos = sum(sentiments_pos) / float(len(sentiments_pos))
+            sent_neu = sum(sentiments_neu) / float(len(sentiments_neu))
+            development = df.loc[(df['market_date'] == date) & (df['company_symbol'] == company), 'development'].values[0]
+            lst.append([date, company, float(emotions['anger'])/float(len(wordset)), float(emotions['anticipation'])/float(len(wordset)), float(emotions['disgust'])/float(len(wordset)), float(emotions['fear'])/float(len(wordset)), float(emotions['joy'])/float(len(wordset)), float(emotions['sadness'])/float(len(wordset)), float(emotions['surprise'])/float(len(wordset)), float(emotions['trust'])/float(len(wordset)), sent,
+                        sent_compound, sent_neg, sent_neu, sent_pos, development])
+
 
 df_result = pd.DataFrame(lst, columns=col)
-df_result.to_csv("news_development_to_emotions_relative.csv")
+df_result.to_csv("news_development_to_emotions_relative_morefeatures.csv")

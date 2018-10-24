@@ -10,16 +10,19 @@ def pos_neg_neu(x):
     else:
         return 0
 
-data = pd.read_csv('news_to_emotions_relative_test.csv')
+data = pd.read_csv('data/news_development_to_emotions_relative_morefeatures.csv')
+print(data.columns)
 
 #split data
-data_0 = data[data['is_volatile'] == 0]
-data_1 = data[data['is_volatile'] == 1]
+data_neg1 = data[data['development'] == -1]
+data_0 = data[data['development'] == 0]
+data_1 = data[data['development'] == 1]
 
 #find correlations
-features = ['anger', 'anticipation', 'disgust', 'fear', 'joy', 'sadness', 'surprise', 'trust', 'sentiment_dict', 'sentiment_lib_avg' ]
-print("volatility:     0         |       1")
+features = ['anger', 'anticipation', 'disgust', 'fear', 'joy', 'sadness', 'surprise', 'trust', 'sentiment_dict', 'sent_compound','sent_neg','sent_neu','sent_pos' ]
+print("development:     -1         |       0         |        1")
 for feature in features:
-    neg = data_0[feature].mean()
+    neg = data_neg1[feature].mean()
+    neu = data_0[feature].mean()
     pos = data_1[feature].mean()
-    print("{}: {} | {}".format(feature, neg, pos))
+    print("{}: {} | {} | {}".format(feature, neg, neu, pos))

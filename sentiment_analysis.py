@@ -11,16 +11,17 @@ data["timestamp"] = data["timestamp"].apply(lambda date: date[:10])
 dateList = list(set(data['timestamp'].tolist()))
 dateList.sort()
 
-# sia = SIA()
-# results = []
-# headlines = data["headline"].tolist()
-#
-# for hl in headlines:
-#     pol_score = sia.polarity_scores(hl)
-#     if pol_score['compound'] >= 0.0:
-#         continue
-#     pol_score['headline'] = hl
-#     results.append(pol_score)
-#
-# print(results[:20])
+
+sia = SIA()
+results = []
+headlines = data["headline"].tolist()
+
+for hl in headlines:
+    pol_score = sia.polarity_scores(hl)
+    if pol_score['compound'] >= 0.0:
+        continue
+    pol_score['headline'] = hl
+    results.append(pol_score)
+
+print(results[:20])
 

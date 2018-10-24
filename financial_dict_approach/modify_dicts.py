@@ -6,16 +6,19 @@ dict_path = 'data/dictionaries/'
 words = []
 most_common = 0
 
+relevant_words = []
+for dict in os.listdir(dict_path):
+    df = pd.read_csv(dict_path + dict)
+    for word in df['word'].values:
+        relevant_words.append(str(word).lower())
+
+
 def compute_weight(word):
     global words, most_common
     count = words.count(word)
     if count == 0:
         return 0
     else:
-        #print(word)
-        #print(count)
-        #print(most_common)
-        #print('\n\n')
         return 1 - 0.5 * (count/most_common)
 
 
@@ -26,16 +29,20 @@ for index, row in vol.iterrows():
     hl = row['headline']
     tokens = word_tokenize(str(hl))
     for token in tokens:
-        words.append(str(token).lower())
-most_common = words.count(max(set(words), key=words.count))
+        token = str(token).lower()
+        if token in relevant_words:
+            words.append(token)
+max_word = max(set(words), key=words.count)
+most_common = words.count(max_word)
+print(max_word)
 print(most_common)
 
 for dict in os.listdir(dict_path):
     df = pd.read_csv(dict_path + dict)
-    print(dict)
     for index, row in df.iterrows():
         if index % 100 == 0:
-            print(index)
+            #print(index)
+            pass
         weight = compute_weight(str(row['word']).lower())
         df.loc[index, 'weight'] = weight
     df = df[~(df['weight'] == 0)]
