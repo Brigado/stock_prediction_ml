@@ -2,7 +2,7 @@ import pandas as pd
 import os
 from nltk.tokenize import sent_tokenize, word_tokenize
 
-dict_path = 'data/dictionaries/'
+dict_path = 'data/dictionaries_raw/'
 words = []
 most_common = 0
 
@@ -47,4 +47,4 @@ for dict in os.listdir(dict_path):
         df.loc[index, 'weight'] = weight
     df = df[~(df['weight'] == 0)]
     df['word'] = df['word'].apply(lambda x: str(x).lower())
-    df.to_csv(dict_path + 'modified_' + dict, index=None)
+    df.to_csv('data/dictionaries_raw/' + 'modified_' + dict, index=None)
