@@ -5,7 +5,6 @@ import os
 from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
 
 emotion_values = ['positive', 'negative', 'litigious', 'uncertainty', 'constraining', 'strong_modal', 'moderate_modal', 'weak_modal']
-col = ['market_date', 'company_symbol', 'positive', 'negative', 'litigious', 'uncertainty', 'constraining', 'strong_modal', 'moderate_modal', 'weak_modal', 'sentiment_lib_avg', 'is_volatile']
 emotion_dfs = {}
 dict_path_dir = "data/dictionaries/"
 for dict in os.listdir(dict_path_dir):
@@ -41,11 +40,18 @@ for relative in (True, False):
         name = ""
         if grouped:
             df = pd.read_csv('data/stock_data/balanced_grouped_dataset.csv')
+            print("count 0: " + str(df[df['is_volatile']==0].count()['is_volatile']))
+            print("count 1: " + str(df[df['is_volatile'] == 1].count()['is_volatile']))
             name = "balanced_grouped_dataset_sentiment{}.csv".format(r)
+            col = ['market_date', 'company_symbol', 'headline', 'positive', 'negative', 'litigious', 'uncertainty', 'constraining','strong_modal', 'moderate_modal', 'weak_modal', 'sentiment_lib_avg', 'is_volatile']
+
 
         else:
             df = pd.read_csv('data/stock_data/balanced_dataset.csv')
+            print("count 0: " + str(df[df['is_volatile']==0].count()['is_volatile']))
+            print("count 1: " + str(df[df['is_volatile'] == 1].count()['is_volatile']))
             name = "balanced_dataset_sentiment{}.csv".format(r)
+            col = ['market_date', 'company_symbol', 'news_id', 'headline', 'positive', 'negative', 'litigious', 'uncertainty', 'constraining','strong_modal', 'moderate_modal', 'weak_modal', 'sentiment_lib_avg', 'is_volatile']
 
         lst = []
         for idx, row in df.iterrows():
@@ -75,11 +81,18 @@ for relative in (True, False):
             emotions = get_emotions(wordset)
 
             c = float(len(wordset)) if relative else 1
-            lst.append([row['market_date'], row['company_symbol'], float(emotions['positive'])/c,
-                        float(emotions['negative'])/c, float(emotions['litigious'])/c,
-                        float(emotions['uncertainty'])/c, float(emotions['constraining'])/c,
-                        float(emotions['strong_modal'])/c,float(emotions['moderate_modal'])/c,
-                        float(emotions['weak_modal'])/c, sentiment, row['is_volatile']])
+            if grouped:
+                lst.append([row['market_date'], row['company_symbol'], row['headline'], float(emotions['positive'])/c,
+                            float(emotions['negative'])/c, float(emotions['litigious'])/c,
+                            float(emotions['uncertainty'])/c, float(emotions['constraining'])/c,
+                            float(emotions['strong_modal'])/c,float(emotions['moderate_modal'])/c,
+                            float(emotions['weak_modal'])/c, sentiment, row['is_volatile']])
+            else:
+                lst.append([row['market_date'], row['company_symbol'], row['news_id'], row['headline'], float(emotions['positive']) / c,
+                            float(emotions['negative']) / c, float(emotions['litigious']) / c,
+                            float(emotions['uncertainty']) / c, float(emotions['constraining']) / c,
+                            float(emotions['strong_modal']) / c, float(emotions['moderate_modal']) / c,
+                            float(emotions['weak_modal']) / c, sentiment, row['is_volatile']])
 
         df_result = pd.DataFrame(lst, columns=col)
         df_result.to_csv(name)
