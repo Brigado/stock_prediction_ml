@@ -4,9 +4,7 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 import os
 from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
 
-ps = PorterStemmer()
-
-emotions = ['positive', 'negative', 'litigious', 'uncertainty', 'constraining', 'strong_modal', 'moderate_modal', 'weak_modal']
+emotion_values = ['positive', 'negative', 'litigious', 'uncertainty', 'constraining', 'strong_modal', 'moderate_modal', 'weak_modal']
 col = ['market_date', 'company_symbol', 'positive', 'negative', 'litigious', 'uncertainty', 'constraining', 'strong_modal', 'moderate_modal', 'weak_modal', 'sentiment_lib_avg', 'is_volatile']
 emotion_dfs = {}
 dict_path_dir = "data/dictionaries/"
@@ -17,7 +15,7 @@ for dict in os.listdir(dict_path_dir):
 def get_emotions(wordset):
     #search for words in dictionaries
     emotion_score = {}
-    for emotion in emotions:
+    for emotion in emotion_values:
         emotion_score[emotion] = 0
     for emotion in emotion_dfs:
         df = emotion_dfs[emotion]
@@ -33,41 +31,55 @@ def get_emotions(wordset):
     return emotion_score
 
 #dataset:
-df = pd.read_csv('data/stock_data/news_to_volatility_dataset.csv')
-lst = []
+grouped = False
+for relative in (True, False):
+    print("relative: " + str(relative))
+    r = "_relative" if relative else ""
+    for grouped in (True, False):
+        print("grouped: " + str(grouped))
+        df = None
+        name = ""
+        if grouped:
+            df = pd.read_csv('data/stock_data/balanced_grouped_dataset.csv')
+            name = "balanced_grouped_dataset_sentiment{}.csv".format(r)
 
-#for all headline for one market day:
-dateList = list(set(df['market_date'].tolist()))
-companyList = list(set(df['company_symbol'].tolist()))
-dateList.sort()
-i = 0
-for date in dateList:
-    i+=1
-    if (i%500 == 0):
-        print(i)
-        df_result = pd.DataFrame(lst, columns=col)
-        df_result.to_csv("news_to_emotions_{}.csv".format(i))
+        else:
+            df = pd.read_csv('data/stock_data/balanced_dataset.csv')
+            name = "balanced_dataset_sentiment{}.csv".format(r)
 
-    for company in companyList:
-        df_date_company = df.loc[(df['market_date'] == date) & (df['company_symbol'] == company), 'headline'].values
-        # create bag of stemmed words out of headlines
-        wordset = set()
-        sentiments = []
-        for hl in df_date_company:
-            #compute sentiment with library:
-            sia = SIA()
-            pol_score = sia.polarity_scores(hl)
-            sentiments.append(pol_score['compound'])
+        lst = []
+        for idx, row in df.iterrows():
+            if (idx+1) % 1000 == 0:
+                print(idx)
+            sentiment = 0
+            if grouped:
+                headlines = str(row['headline']).split("<s>")
+                sentiments = []
+                for hl in headlines:
+                    sia = SIA()
+                    pol_score = sia.polarity_scores(hl)
+                    sentiments.append(pol_score['compound'])
+                sentiment = sum(sentiments)/float(len(sentiments))
 
-            #dictionary preparation
-            words = word_tokenize(hl)
+            else:
+                hl = row['headline']
+                # compute sentiment with library:
+                sia = SIA()
+                sentiment = sia.polarity_scores(hl)['compound']
+
+            # dictionary preparation
+            words = word_tokenize(row['headline'])
+            wordset = []
             for word in words:
-                wordset.add(word.lower())
-        emotions = get_emotions(wordset)
+                wordset.append(word.lower())
+            emotions = get_emotions(wordset)
 
-        if len(wordset) > 0:
-            volatility = df.loc[(df['market_date'] == date) & (df['company_symbol'] == company), 'is_volatile'].values[0]
-            lst.append([date, company, float(emotions['positive']), float(emotions['negative']), float(emotions['litigious']), float(emotions['uncertainty']), float(emotions['constraining']), float(emotions['strong_modal']), float(emotions['moderate_modal']), float(emotions['weak_modal']), sum(sentiments), volatility])
+            c = float(len(wordset)) if relative else 1
+            lst.append([row['market_date'], row['company_symbol'], float(emotions['positive'])/c,
+                        float(emotions['negative'])/c, float(emotions['litigious'])/c,
+                        float(emotions['uncertainty'])/c, float(emotions['constraining'])/c,
+                        float(emotions['strong_modal'])/c,float(emotions['moderate_modal'])/c,
+                        float(emotions['weak_modal'])/c, sentiment, row['is_volatile']])
 
-df_result = pd.DataFrame(lst, columns=col)
-df_result.to_csv("news_to_emotions.csv")
+        df_result = pd.DataFrame(lst, columns=col)
+        df_result.to_csv(name)
